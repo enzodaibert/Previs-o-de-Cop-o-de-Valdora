@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Copão de Valdora — Previsão</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gold: #c9a84c;
+    --gold-light: #f0d080;
+    --gold-dark: #8a6a1f;
+    --crimson: #8b1a1a;
+    --crimson-light: #c0392b;
+    --bg: #0a0806;
+    --bg2: #110e09;
+    --bg3: #1a1510;
+    --border: rgba(201,168,76,0.25);
+    --border-bright: rgba(201,168,76,0.6);
+    --text: #e8d9b0;
+    --text-muted: #8a7a5a;
+    --winner-glow: 0 0 12px rgba(201,168,76,0.5);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Crimson Text', Georgia, serif;
+    min-height: 100vh;
+    overflow-x: auto;
+    background-image:
+      radial-gradient(ellipse at 20% 20%, rgba(139,26,26,0.08) 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 80%, rgba(201,168,76,0.06) 0%, transparent 60%),
+      repeating-linear-gradient(0deg, transparent, transparent 60px, rgba(201,168,76,0.015) 60px, rgba(201,168,76,0.015) 61px),
+      repeating-linear-gradient(90deg, transparent, transparent 60px, rgba(201,168,76,0.015) 60px, rgba(201,168,76,0.015) 61px);
+  }
+
+  header {
+    text-align: center;
+    padding: 2.5rem 1rem 1.5rem;
+    position: relative;
+  }
+
+  .crest {
+    width: 70px;
+    height: 70px;
+    margin: 0 auto 1rem;
+    position: relative;
+  }
+
+  .crest svg { width: 100%; height: 100%; }
+
+  h1 {
+    font-family: 'Cinzel', serif;
+    font-size: clamp(1.6rem, 4vw, 2.8rem);
+    font-weight: 900;
+    color: var(--gold);
+    letter-spacing: 0.12em;
+    text-shadow: 0 0 40px rgba(201,168,76,0.3);
+    line-height: 1.1;
+  }
+
+  .subtitle {
+    font-family: 'Cinzel', serif;
+    font-size: 0.75rem;
+    letter-spacing: 0.3em;
+    color: var(--text-muted);
+    margin-top: 0.4rem;
+    text-transform: uppercase;
+  }
+
+  .divider {
+    width: 200px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    margin: 1rem auto;
+  }
+
+  .instructions {
+    text-align: center;
+    font-style: italic;
+    color: var(--text-muted);
+    font-size: 1rem;
+    margin-bottom: 1.5rem;
+    padding: 0 1rem;
+  }
+
+  /* BRACKET LAYOUT */
+  .bracket-wrap {
+    padding: 1rem 2rem 3rem;
+    overflow-x: auto;
+  }
+
+  .bracket {
+    display: flex;
+    gap: 0;
+    align-items: stretch;
+    min-width: 900px;
+    position: relative;
+  }
+
+  .round-col {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-width: 160px;
+  }
+
+  .round-label {
+    font-family: 'Cinzel', serif;
+    font-size: 0.65rem;
+    letter-spacing: 0.2em;
+    color: var(--gold-dark);
+    text-align: center;
+    padding: 0.5rem;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 0.5rem;
+  }
+
+  .matches-col {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    justify-content: space-around;
+    padding: 0.5rem 0.25rem;
+    position: relative;
+  }
+
+  .match-block {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    margin: 4px 6px;
+  }
+
+  .team-slot {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    padding: 0.45rem 0.6rem;
+    font-size: 0.82rem;
+    cursor: pointer;
+    transition: all 0.18s ease;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    position: relative;
+    user-select: none;
+    line-height: 1.3;
+    color: var(--text);
+  }
+
+  .team-slot:first-child {
+    border-bottom: none;
+    border-radius: 3px 3px 0 0;
+  }
+
+  .team-slot:last-child {
+    border-top: 1px solid var(--border);
+    border-radius: 0 0 3px 3px;
+  }
+
+  .team-slot:hover:not(.empty):not(.locked) {
+    background: rgba(201,168,76,0.12);
+    border-color: var(--gold-dark);
+    color: var(--gold-light);
+  }
+
+  .team-slot.winner {
+    background: linear-gradient(90deg, rgba(201,168,76,0.18), rgba(201,168,76,0.08));
+    border-color: var(--gold);
+    color: var(--gold-light);
+    font-weight: 600;
+    box-shadow: var(--winner-glow);
+  }
+
+  .team-slot.winner::before {
+    content: '⚔';
+    position: absolute;
+    right: 6px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.65rem;
+    opacity: 0.7;
+  }
+
+  .team-slot.loser {
+    opacity: 0.38;
+    text-decoration: line-through;
+    cursor: default;
+  }
+
+  .team-slot.empty {
+    color: var(--text-muted);
+    font-style: italic;
+    cursor: default;
+    opacity: 0.5;
+  }
+
+  .team-slot.locked {
+    cursor: default;
+  }
+
+  /* connector lines */
+  .match-block::after {
+    content: '';
+    position: absolute;
+    right: -7px;
+    top: 25%;
+    height: 50%;
+    width: 7px;
+    border-top: 1px solid var(--border);
+    border-right: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    pointer-events: none;
+  }
+
+  .round-col:last-child .match-block::after { display: none; }
+
+  /* FINAL */
+  .final-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex: 0.8;
+    min-width: 160px;
+    padding: 0 1rem;
+  }
+
+  .trophy-area {
+    text-align: center;
+    padding: 1rem;
+  }
+
+  .trophy-icon {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+    filter: drop-shadow(0 0 8px rgba(201,168,76,0.6));
+  }
+
+  .champion-label {
+    font-family: 'Cinzel', serif;
+    font-size: 0.6rem;
+    letter-spacing: 0.25em;
+    color: var(--gold-dark);
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+  }
+
+  .champion-slot {
+    background: linear-gradient(135deg, rgba(201,168,76,0.2), rgba(201,168,76,0.05));
+    border: 1px solid var(--gold);
+    border-radius: 4px;
+    padding: 0.7rem 1.2rem;
+    min-width: 140px;
+    text-align: center;
+    font-family: 'Cinzel', serif;
+    font-size: 0.8rem;
+    color: var(--gold-light);
+    min-height: 42px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 20px rgba(201,168,76,0.15), inset 0 0 20px rgba(201,168,76,0.03);
+    font-style: italic;
+    transition: all 0.3s ease;
+  }
+
+  .champion-slot.filled {
+    font-style: normal;
+    font-weight: 700;
+    box-shadow: 0 0 30px rgba(201,168,76,0.35), inset 0 0 20px rgba(201,168,76,0.05);
+    text-shadow: 0 0 15px rgba(201,168,76,0.5);
+    animation: crownGlow 2s ease-in-out infinite alternate;
+  }
+
+  @keyframes crownGlow {
+    from { box-shadow: 0 0 20px rgba(201,168,76,0.3), inset 0 0 20px rgba(201,168,76,0.03); }
+    to   { box-shadow: 0 0 40px rgba(201,168,76,0.55), inset 0 0 30px rgba(201,168,76,0.08); }
+  }
+
+  /* RESET */
+  .reset-btn {
+    display: block;
+    margin: 1.5rem auto 0;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    font-family: 'Cinzel', serif;
+    font-size: 0.65rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    padding: 0.5rem 1.5rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    border-radius: 2px;
+  }
+
+  .reset-btn:hover {
+    border-color: var(--gold-dark);
+    color: var(--gold);
+  }
+
+  /* SIDE LABELS */
+  .bracket-sides {
+    display: flex;
+    min-width: 900px;
+    padding: 0 2rem;
+    margin-bottom: 0.25rem;
+  }
+
+  .side-label {
+    flex: 1;
+    text-align: center;
+    font-family: 'Cinzel', serif;
+    font-size: 0.6rem;
+    letter-spacing: 0.2em;
+    color: var(--crimson-light);
+    text-transform: uppercase;
+    opacity: 0.7;
+    padding-bottom: 0.25rem;
+    border-bottom: 1px solid rgba(139,26,26,0.3);
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { height: 4px; width: 4px; }
+  ::-webkit-scrollbar-track { background: var(--bg2); }
+  ::-webkit-scrollbar-thumb { background: var(--gold-dark); border-radius: 2px; }
+
+  .round-divider {
+    width: 1px;
+    background: linear-gradient(180deg, transparent, var(--border), transparent);
+    margin: 0 4px;
+    align-self: stretch;
+  }
+
+  @media (max-width: 600px) {
+    .bracket-wrap { padding: 0.5rem 0.5rem 2rem; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="crest">
+    <svg viewBox="0 0 70 70" xmlns="http://www.w3.org/2000/svg">
+      <polygon points="35,4 45,18 62,18 49,30 54,48 35,37 16,48 21,30 8,18 25,18" fill="none" stroke="#c9a84c" stroke-width="1.5" opacity="0.8"/>
+      <circle cx="35" cy="35" r="12" fill="none" stroke="#c9a84c" stroke-width="1" opacity="0.5"/>
+      <text x="35" y="40" text-anchor="middle" font-family="Cinzel,serif" font-size="11" fill="#c9a84c" font-weight="700">CV</text>
+    </svg>
+  </div>
+  <h1>COPÃO DE VALDORA</h1>
+  <div class="subtitle">Previsão do Mata-Mata — Edição Atual</div>
+  <div class="divider"></div>
+  <p class="instructions">Clique no time para avançá-lo na chave</p>
+</header>
+
+<div class="bracket-wrap">
+  <div class="bracket-sides">
+    <div class="side-label" style="flex:4">Chave A</div>
+    <div style="flex:0.1"></div>
+    <div class="side-label" style="flex:4">Chave B</div>
+    <div style="flex:0.8"></div>
+  </div>
+
+  <div class="bracket" id="bracket">
+    <!-- Cols injected by JS -->
+  </div>
+</div>
+
+<button class="reset-btn" onclick="resetAll()">↺ Reiniciar Previsão</button>
+
+<script>
+// ── DATA ──
+const r16A = [
+  ['Dragons FC', 'CAMP 7'],
+  ['Corsários de Vandar', 'CAMP 2'],
+  ['Vulcanova SC', 'CAMP 1'],
+  ['Tempestade Azul', 'Polar do Norte'],
+  ['Aurora Capital FC', 'CAMP 6'],
+  ['Drakaris United', 'Ferroviária de Karsa'],
+  ['Real Montara', 'CAMP 3'],
+  ['Atlântico Dourado', 'Real Boreal'],
+];
+
+const r16B = [
+  ['Mecânicos de Torval', 'CAMP 8'],
+  ['Luz do Oeste FC', 'CAMP 5'],
+  ['Tigres de Myral', 'Vale Rubro'],
+  ['Titanes Soláris', 'CAMP 4'],
+  ['Glaciar Imperial', 'Águias do Norte'],
+  ['Serpentes de Valnara', 'Lobos de Talmar'],
+  ['Esperança de Lirien', 'Oráculo de Nerth'],
+  ['Verde Reino FC', 'Tubarões de Lysmar'],
+];
+
+// State: winners[round][matchIndex] — round 0=R16A, 1=R16B, 2=QFA, 3=QFB, 4=SFA, 5=SFB, 6=Final
+const state = {
+  r16A: Array(8).fill(null),
+  r16B: Array(8).fill(null),
+  qfA:  Array(4).fill(null),
+  qfB:  Array(4).fill(null),
+  sfA:  Array(2).fill(null),
+  sfB:  Array(2).fill(null),
+  fA:   Array(1).fill(null),
+  fB:   Array(1).fill(null),
+  champion: null,
+};
+
+function pick(side, round, matchIdx, team) {
+  // Clear downstream
+  const rounds = ['r16A','r16B','qfA','qfB','sfA','sfB','fA','fB'];
+  if (side === 'A') {
+    if (round === 'r16A') {
+      state.r16A[matchIdx] = team;
+      const qfIdx = Math.floor(matchIdx / 2);
+      const slot = matchIdx % 2;
+      // if both slots of qf were set from this r16 match, clear qf winner
+      clearDownstreamA(qfIdx);
+    } else if (round === 'qfA') {
+      state.qfA[matchIdx] = team;
+      const sfIdx = Math.floor(matchIdx / 2);
+      clearDownstreamSFA(sfIdx);
+    } else if (round === 'sfA') {
+      state.sfA[matchIdx] = team;
+      clearFinal();
+    } else if (round === 'fA') {
+      state.fA[0] = team;
+      state.champion = null;
+    }
+  } else {
+    if (round === 'r16B') {
+      state.r16B[matchIdx] = team;
+      clearDownstreamB(Math.floor(matchIdx / 2));
+    } else if (round === 'qfB') {
+      state.qfB[matchIdx] = team;
+      clearDownstreamSFB(Math.floor(matchIdx / 2));
+    } else if (round === 'sfB') {
+      state.sfB[matchIdx] = team;
+      clearFinal();
+    } else if (round === 'fB') {
+      state.fB[0] = team;
+      state.champion = null;
+    }
+  }
+  render();
+}
+
+function clearDownstreamA(qfIdx) {
+  state.qfA[qfIdx] = null;
+  const sfIdx = Math.floor(qfIdx / 2);
+  clearDownstreamSFA(sfIdx);
+}
+function clearDownstreamSFA(sfIdx) {
+  state.sfA[sfIdx] = null;
+  clearFinal();
+}
+function clearDownstreamB(qfIdx) {
+  state.qfB[qfIdx] = null;
+  const sfIdx = Math.floor(qfIdx / 2);
+  clearDownstreamSFB(sfIdx);
+}
+function clearDownstreamSFB(sfIdx) {
+  state.sfB[sfIdx] = null;
+  clearFinal();
+}
+function clearFinal() {
+  state.fA[0] = null;
+  state.fB[0] = null;
+  state.champion = null;
+}
+
+function getQFPair(r16Winners, matchIdx) {
+  // r16[matchIdx*2] and r16[matchIdx*2+1] feed into QF matchIdx
+  return [r16Winners[matchIdx*2], r16Winners[matchIdx*2+1]];
+}
+
+function getSFPair(qfWinners, matchIdx) {
+  return [qfWinners[matchIdx*2], qfWinners[matchIdx*2+1]];
+}
+
+function resetAll() {
+  Object.keys(state).forEach(k => {
+    if (Array.isArray(state[k])) state[k] = state[k].map(()=>null);
+    else state[k] = null;
+  });
+  render();
+}
+
+// ── RENDER ──
+function render() {
+  const bracket = document.getElementById('bracket');
+
+  // Build columns: R16A | QFA | SFA | FA  |  Final | FB | SFB | QFB | R16B
+  let html = '';
+
+  // R16 A
+  html += buildRoundCol('R16 — Oitavas', buildMatchesR16(r16A, state.r16A, 'A', 'r16A'));
+
+  html += '<div class="round-divider"></div>';
+
+  // QF A
+  html += buildRoundCol('Quartas A', buildMatchesQF(state.r16A, state.qfA, 'A', 'qfA'));
+
+  html += '<div class="round-divider"></div>';
+
+  // SF A
+  html += buildRoundCol('Semis A', buildMatchesSF(state.qfA, state.sfA, 'A', 'sfA'));
+
+  html += '<div class="round-divider"></div>';
+
+  // Final A side
+  html += buildRoundCol('Final A', buildMatchesFinalSide(state.sfA, state.fA, 'A', 'fA'));
+
+  html += '<div class="round-divider"></div>';
+
+  // CHAMPION CENTER
+  html += buildChampion();
+
+  html += '<div class="round-divider"></div>';
+
+  // Final B side
+  html += buildRoundCol('Final B', buildMatchesFinalSide(state.sfB, state.fB, 'B', 'fB'));
+
+  html += '<div class="round-divider"></div>';
+
+  // SF B
+  html += buildRoundCol('Semis B', buildMatchesSF(state.qfB, state.sfB, 'B', 'sfB'));
+
+  html += '<div class="round-divider"></div>';
+
+  // QF B
+  html += buildRoundCol('Quartas B', buildMatchesQF(state.r16B, state.qfB, 'B', 'qfB'));
+
+  html += '<div class="round-divider"></div>';
+
+  // R16 B
+  html += buildRoundCol('R16 — Oitavas', buildMatchesR16(r16B, state.r16B, 'B', 'r16B'));
+
+  bracket.innerHTML = html;
+}
+
+function buildRoundCol(label, matchesHtml) {
+  return `<div class="round-col">
+    <div class="round-label">${label}</div>
+    <div class="matches-col">${matchesHtml}</div>
+  </div>`;
+}
+
+function teamSlot(name, isWinner, isLoser, side, round, matchIdx, teamIdx, clickable) {
+  if (!name) return `<div class="team-slot empty locked">— a definir —</div>`;
+  const cls = isWinner ? 'winner' : isLoser ? 'loser' : '';
+  const onclick = clickable && !isLoser
+    ? `onclick="pick('${side}','${round}',${matchIdx},'${name.replace(/'/g,"\\'")}')"`
+    : '';
+  return `<div class="team-slot ${cls}" ${onclick} title="${name}">${name}</div>`;
+}
+
+function buildMatchesR16(pairs, winners, side, round) {
+  return pairs.map(([t1, t2], i) => {
+    const w = winners[i];
+    return `<div class="match-block">
+      ${teamSlot(t1, w===t1, w && w!==t1, side, round, i, 0, true)}
+      ${teamSlot(t2, w===t2, w && w!==t2, side, round, i, 1, true)}
+    </div>`;
+  }).join('');
+}
+
+function buildMatchesQF(r16Winners, qfWinners, side, round) {
+  const out = [];
+  for (let i = 0; i < 4; i++) {
+    const [t1, t2] = getQFPair(r16Winners, i);
+    const w = qfWinners[i];
+    const canClick = !!(t1 && t2);
+    out.push(`<div class="match-block">
+      ${teamSlot(t1, w===t1, w && w!==t1, side, round, i, 0, canClick)}
+      ${teamSlot(t2, w===t2, w && w!==t2, side, round, i, 1, canClick)}
+    </div>`);
+  }
+  return out.join('');
+}
+
+function buildMatchesSF(qfWinners, sfWinners, side, round) {
+  const out = [];
+  for (let i = 0; i < 2; i++) {
+    const [t1, t2] = getSFPair(qfWinners, i);
+    const w = sfWinners[i];
+    const canClick = !!(t1 && t2);
+    out.push(`<div class="match-block">
+      ${teamSlot(t1, w===t1, w && w!==t1, side, round, i, 0, canClick)}
+      ${teamSlot(t2, w===t2, w && w!==t2, side, round, i, 1, canClick)}
+    </div>`);
+  }
+  return out.join('');
+}
+
+function buildMatchesFinalSide(sfWinners, fWinners, side, round) {
+  const t1 = sfWinners[0], t2 = sfWinners[1];
+  const w = fWinners[0];
+  const canClick = !!(t1 && t2);
+
+  // If we have this finalist, and we know the other side's finalist, we can determine champion
+  const otherFinal = side === 'A' ? state.fB[0] : state.fA[0];
+
+  return `<div class="match-block">
+    ${teamSlot(t1, w===t1 && !!w, w && w!==t1, side, round, 0, 0, canClick)}
+    ${teamSlot(t2, w===t2 && !!w, w && w!==t2, side, round, 0, 1, canClick)}
+  </div>`;
+}
+
+function buildChampion() {
+  // Check if we can determine champion
+  const fA = state.fA[0], fB = state.fB[0];
+
+  // champion column: show final match
+  const w = state.champion;
+  const canClick = !!(fA && fB);
+
+  let finalMatch = '';
+  if (fA || fB) {
+    finalMatch = `<div class="match-block" style="margin-bottom:1rem">
+      ${teamSlot(fA||null, w===fA && !!w, w && w!==fA, 'C', 'champion', 0, 0, canClick)}
+      ${teamSlot(fB||null, w===fB && !!w, w && w!==fB, 'C', 'champion', 0, 1, canClick)}
+    </div>`;
+  }
+
+  const champName = state.champion || (canClick ? 'Escolha o campeão' : 'Campeão');
+
+  return `<div class="final-col">
+    <div class="round-label">Grande Final</div>
+    <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0.5rem 0">
+      ${finalMatch}
+      <div class="trophy-area">
+        <div class="trophy-icon">🏆</div>
+        <div class="champion-label">Campeão</div>
+        <div class="champion-slot ${state.champion?'filled':''}">${champName}</div>
+      </div>
+    </div>
+  </div>`;
+}
+
+// Override pick for champion
+const _pick = pick;
+window.pick = function(side, round, matchIdx, team) {
+  if (side === 'C' && round === 'champion') {
+    state.champion = team;
+    render();
+    return;
+  }
+  _pick(side, round, matchIdx, team);
+};
+
+render();
+</script>
+</body>
+</html>
